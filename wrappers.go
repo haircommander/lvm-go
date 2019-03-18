@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+    "strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

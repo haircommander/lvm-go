@@ -1,6 +1,5 @@
-import (
-	"strings"
-)
+package lvm
+
 // ReportLoopback represents information about a configured loopback device,
 // produced by the "losetup --list" command.
 type ReportLoopback struct {
