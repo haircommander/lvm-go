@@ -46,9 +46,9 @@ func runWithOutput(cmdPath string, args ...string) (string, error) {
 	return stdout.String(), nil
 }
 
-// getPhysicalVolumes returns information about known physical volumes or a
+// GetPhysicalVolumes returns information about known physical volumes or a
 // specific physical volume.
-func getPhysicalVolumes(pvname string) (Report, error) {
+func GetPhysicalVolumes(pvname string) (Report, error) {
 	report := Report{}
 	b := []byte{}
 	if pvname != "" {
@@ -71,9 +71,9 @@ func getPhysicalVolumes(pvname string) (Report, error) {
 	return report, nil
 }
 
-// getVolumeGroups returns information about the known volume groups, or about
+// GetVolumeGroups returns information about the known volume groups, or about
 // a specific volume group.
-func getVolumeGroups(vgname string) (Report, error) {
+func GetVolumeGroups(vgname string) (Report, error) {
 	report := Report{}
 	b := []byte{}
 	if vgname != "" {
@@ -121,9 +121,9 @@ func getVolumeGroupsFull(vgname string) (ReportFull, error) {
 	return report, nil
 }
 
-// getLogicalVolumes returns information about all known logical volumes, about
+// GetLogicalVolumes returns information about all known logical volumes, about
 // the volumes in a specified volume group, or about a specific volume.
-func getLogicalVolumes(vgname, volume string) (Report, error) {
+func GetLogicalVolumes(vgname, volume string) (Report, error) {
 	report := Report{}
 	b := []byte{}
 	if vgname != "" {
@@ -157,7 +157,7 @@ func getLogicalVolumes(vgname, volume string) (Report, error) {
 // physicalVolumeIsPresent checks if a physical volume with the specified name
 // exists.  Force a rescan of that device for physical volume header data, for
 // cases where we've just attached it.
-func physicalVolumeIsPresent(pvname string) bool {
+func PhysicalVolumeIsPresent(pvname string) bool {
 	scanned, err := runWithOutput(LVMPath, "pvscan", "--cache", pvname)
 	if err != nil {
 		logrus.Debugf("lvm pvscan failed: %q", scanned)
@@ -171,15 +171,17 @@ func physicalVolumeIsPresent(pvname string) bool {
 	return true
 }
 
+// TODO FIXME maybe move this?
 // volumeNameForID converts an ID into a reasonable volume name.
-func volumeNameForID(ID string) string {
+func VolumeNameForID(ID string) string {
     return "layer." + ID
 }
 
+// TODO FIXME maybe move this?
 // volumePathForID determines the device pathname for a volume with the
 // specified ID in a particular volume group, or across all volume groups.
-func volumePathForID(vgname, id string) (string, error) {
-	lvname := volumeNameForID(id)
+func VolumePathForID(vgname, id string) (string, error) {
+	lvname := VolumeNameForID(id)
 	report, err := getVolumeGroupsFull(vgname)
 	if err != nil {
 		return "", errors.WithStack(err)
@@ -218,10 +220,10 @@ func volumePathForID(vgname, id string) (string, error) {
 	return "", errors.Errorf("no LV named %q found", vgname+"/"+lvname)
 }
 
-// readVolumeGroupForPhysicalVolume will determine the name of the volume group
+// ReadVolumeGroupForPhysicalVolume will determine the name of the volume group
 // to which the specified physical volume belongs.
-func readVolumeGroupForPhysicalVolume(pvname string) (string, error) {
-	report, err := getPhysicalVolumes(pvname)
+func ReadVolumeGroupForPhysicalVolume(pvname string) (string, error) {
+	report, err := GetPhysicalVolumes(pvname)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -235,8 +237,8 @@ func readVolumeGroupForPhysicalVolume(pvname string) (string, error) {
 	return "", errors.Errorf("no PV named %q found", pvname)
 }
 
-// volumeGroupIsPresent checks if a volume group with the specified name exists.
-func volumeGroupIsPresent(vgname string) bool {
+// VolumeGroupIsPresent checks if a volume group with the specified name exists.
+func VolumeGroupIsPresent(vgname string) bool {
 	scanned, err := runWithOutput(LVMPath, "vgscan", "--cache")
 	if err != nil {
 		logrus.Debugf("lvm vgscan failed for %q: %q", vgname, scanned)
@@ -250,9 +252,9 @@ func volumeGroupIsPresent(vgname string) bool {
 	return true
 }
 
-// getLogicalVolume returns information about the specified logical volume.
-func getLogicalVolume(vgname, volume string) (ReportLV, error) {
-	report, err := getLogicalVolumes(vgname, volume)
+// GetLogicalVolume returns information about the specified logical volume.
+func GetLogicalVolume(vgname, volume string) (ReportLV, error) {
+	report, err := GetLogicalVolumes(vgname, volume)
 	if err != nil {
 		return ReportLV{}, errors.WithStack(err)
 	}
@@ -266,9 +268,9 @@ func getLogicalVolume(vgname, volume string) (ReportLV, error) {
 	return ReportLV{}, errors.Errorf("no LV named %q found", volume)
 }
 
-// logicalVolumeIsPresent checks if a logical volume with the specified name in
+// LogicalVolumeIsPresent checks if a logical volume with the specified name in
 // the specified volume group exists.
-func logicalVolumeIsPresent(vgname, volume string) bool {
+func LogicalVolumeIsPresent(vgname, volume string) bool {
 	scanned, err := runWithOutput(LVMPath, "lvscan", "--cache", vgname+"/"+volume)
 	if err != nil {
 		logrus.Debugf("lvm lvscan failed: %q", scanned)
@@ -277,8 +279,8 @@ func logicalVolumeIsPresent(vgname, volume string) bool {
 	return true
 }
 
-// createPhysicalVolume formats a specified device as a physical volume.
-func createPhysicalVolume(device string) error {
+// CreatePhysicalVolume formats a specified device as a physical volume.
+func CreatePhysicalVolume(device string) error {
 	err := runWithoutOutput(LVMPath, "pvcreate", device)
 	if err != nil {
 		return errors.Wrapf(err, "error running \"lvm pvcreate\" for %q", device)
@@ -286,9 +288,9 @@ func createPhysicalVolume(device string) error {
 	return nil
 }
 
-// resizePhysicalVolume tells the kernel that the loopback device may be larger
+// ResizePhysicalVolume tells the kernel that the loopback device may be larger
 // now, so the volume group that its in will care about that.
-func resizePhysicalVolume(device string) error {
+func ResizePhysicalVolume(device string) error {
 	output, err := runWithOutput(LVMPath, "pvresize", device)
 	output = strings.TrimRight(output, "\r\n\t ")
 	if err != nil {
@@ -297,8 +299,8 @@ func resizePhysicalVolume(device string) error {
 	return nil
 }
 
-// createPhysicalVolume formats a specified device as a physical volume.
-func createVolumeGroup(vgname string, device ...string) error {
+// CreateVolumeGroup formats a specified device as a physical volume.
+func CreateVolumeGroup(vgname string, device ...string) error {
 	err := runWithoutOutput(LVMPath, append([]string{"vgcreate", vgname}, device...)...)
 	if err != nil {
 		return errors.Wrapf(err, "error running \"lvm vgcreate\" for %v", device)
@@ -306,9 +308,9 @@ func createVolumeGroup(vgname string, device ...string) error {
 	return nil
 }
 
-// activateVolumeGroup activates the specified volume group, making all of its
+// ActivateVolumeGroup activates the specified volume group, making all of its
 // logical volumes visible.
-func activateVolumeGroup(vgname string) error {
+func ActivateVolumeGroup(vgname string) error {
 	err := runWithoutOutput(LVMPath, "vgchange", "--activate", "y", "--ignoreactivationskip", vgname)
 	if err != nil {
 		return errors.Wrapf(err, "error running \"lvm vgchange --activate y\" for %q", vgname)
@@ -316,9 +318,9 @@ func activateVolumeGroup(vgname string) error {
 	return nil
 }
 
-// deactivateVolumeGroup deactivates the specified volume group, making all of
+// DeactivateVolumeGroup deactivates the specified volume group, making all of
 // its logical volumes invisible.
-func deactivateVolumeGroup(vgname string) error {
+func DeactivateVolumeGroup(vgname string) error {
 	err := runWithoutOutput(LVMPath, "vgchange", "--activate", "n", vgname)
 	if err != nil {
 		return errors.Wrapf(err, "error running \"lvm vgchange --activate n\" for %q", vgname)
@@ -326,9 +328,9 @@ func deactivateVolumeGroup(vgname string) error {
 	return nil
 }
 
-// activateLogicalVolume activates a single logical volume in the specified
+// ActivateLogicalVolume activates a single logical volume in the specified
 // volume group, making it visible.
-func activateLogicalVolume(vgname, volume string) error {
+func ActivateLogicalVolume(vgname, volume string) error {
 	err := runWithoutOutput(LVMPath, "lvchange", "--activate", "y", "--ignoreactivationskip", vgname+"/"+volume)
 	if err != nil {
 		return errors.Wrapf(err, "error running \"lvm lvchange --activate y\" for %q", vgname+"/"+volume)
@@ -336,9 +338,9 @@ func activateLogicalVolume(vgname, volume string) error {
 	return nil
 }
 
-// deactivateLogicalVolume deactivates a single logical volume in the specified
+// DeactivateLogicalVolume deactivates a single logical volume in the specified
 // volume group, making it invisible.
-func deactivateLogicalVolume(vgname, volume string) error {
+func DeactivateLogicalVolume(vgname, volume string) error {
 	err := runWithoutOutput(LVMPath, "lvchange", "--activate", "n", vgname+"/"+volume)
 	if err != nil {
 		return errors.Wrapf(err, "error running \"lvm lvchange --activate n\" for %q", vgname+"/"+volume)
@@ -347,10 +349,10 @@ func deactivateLogicalVolume(vgname, volume string) error {
 }
 
 // read information about the active thin pool
-func readPoolInfo(vgname, poolname string) (lvmPoolHistory, error) {
+func ReadPoolInfo(vgname, poolname string) (LvmPoolHistory, error) {
 	report, err := getVolumeGroupsFull(vgname)
 	if err != nil {
-		return lvmPoolHistory{}, errors.Wrapf(err, "error reading information about volume group %q", vgname)
+		return LvmPoolHistory{}, errors.Wrapf(err, "error reading information about volume group %q", vgname)
 	}
 	for _, entry := range report.Reports {
 		if vgname != "" {
@@ -369,7 +371,7 @@ func readPoolInfo(vgname, poolname string) (lvmPoolHistory, error) {
 			if lv.Name != poolname {
 				continue
 			}
-			history := lvmPoolHistory{
+			history := LvmPoolHistory{
 				VGname:   vgname,
 				PoolName: lv.Name,
 				PoolUUID: lv.UUID,
@@ -377,5 +379,5 @@ func readPoolInfo(vgname, poolname string) (lvmPoolHistory, error) {
 			return history, nil
 		}
 	}
-	return lvmPoolHistory{}, errors.Errorf("unable to locate information about pool %q in volume group %q", poolname, vgname)
+	return LvmPoolHistory{}, errors.Errorf("unable to locate information about pool %q in volume group %q", poolname, vgname)
 }

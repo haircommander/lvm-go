@@ -252,7 +252,7 @@ type ReportFull struct {
 // this is our record of the last pool that we used, along with its UUID.  We
 // need to error out if it's changed, because the set of layers the pool has
 // likely no longer matches what higher level APIs think we have.
-type lvmPoolHistory struct {
+type LvmPoolHistory struct {
     VGname   string `json:"vgname"`
     PoolName string `json:"poolname"`
     PoolUUID string `json:"uuid"`
